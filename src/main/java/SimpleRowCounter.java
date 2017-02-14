@@ -30,7 +30,7 @@ public class SimpleRowCounter extends Configured implements Tool {
         scan.setFilter(new FirstKeyOnlyFilter());
         scan.setCaching(500);
 
-        Configuration conf = new Configuration();
+        Configuration conf = getConf();
         Job job = Job.getInstance(conf);
         job.setJarByClass(SimpleRowCounter.class);
         TableMapReduceUtil.initTableMapperJob(

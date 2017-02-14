@@ -26,6 +26,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Partitioner;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -55,9 +57,12 @@ public class MyTeraSort extends Configured implements Tool {
     }
 
     public int run(String[] args) throws Exception {
+        System.setProperty("HADOOP_USER_NAME", "hdfs");
         LOG.info("starting");
         //common settings
-        Job job = Job.getInstance(this.getConf());
+        Configuration conf = this.getConf();
+        conf.set("fs.hdfs.impl","org.apache.hadoop.hdfs.DistributedFileSystem");
+        Job job = Job.getInstance(conf);
         Path outputDir = new Path(args[2]);
         job.setJobName("TeraSort");
         job.setJarByClass(MyTeraSort.class);
@@ -65,6 +70,8 @@ public class MyTeraSort extends Configured implements Tool {
         job.setOutputValueClass(Text.class);
         job.setOutputFormatClass(TeraOutputFormat.class);
         FileOutputFormat.setOutputPath(job, outputDir);
+        Path partitionFile = new Path(outputDir, "_partition.lst");
+        FileSystem fs = FileSystem.get(this.getConf());
 
         if(args[0].equals("fs")) {
             System.out.println("file system mode");
@@ -73,6 +80,10 @@ public class MyTeraSort extends Configured implements Tool {
             job.setInputFormatClass(CombineTeraInputFormat.class);
         } else if (args[0].equals("hb")) {
             System.out.println("hbase mode");
+            if(!fs.exists(partitionFile)) {
+                System.out.println("No partition file found. Exit");
+                return -1;
+            }
             String tableName = args[1];
             Scan scan = new Scan();
             scan.setCaching(10);        // 1 is the default in Scan, which will be bad for MapReduce jobs
@@ -86,13 +97,22 @@ public class MyTeraSort extends Configured implements Tool {
                     Text.class,             // mapper output key
                     Text.class,             // mapper output value
                     job);
+        } else if (args[0].equals("sq")) {
+            if(!fs.exists(partitionFile)) {
+                System.out.println("No partition file found. Exit");
+                return -1;
+            }
+            System.out.println("sequence file mode");
+            Path inputDir = new Path(args[1]);
+            FileInputFormat.addInputPath(job, inputDir);
+            job.setInputFormatClass(SequenceFileInputFormat.class);
+            job.setMapperClass(TeraSeqParserMapper.class);
         }
 
-        Path partitionFile = new Path(outputDir, "_partition.lst");
+
         URI partitionUri = new URI(partitionFile.toString() + "#" + "_partition.lst");
 
         //create the partition file only if not exists.
-        FileSystem fs = FileSystem.get(this.getConf());
         if(!fs.exists(partitionFile)) {
             long ret = System.currentTimeMillis();
             try {

@@ -3,6 +3,7 @@ import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -56,6 +57,8 @@ public class WordCount extends Configured implements Tool {
         System.setProperty("HADOOP_USER_NAME", "hdfs");
         Configuration conf = getConf();
 
+//        conf.set("yarn.application.classpath", "$HADOOP_CONF_DIR, $HADOOP_COMMON_HOME/,$HADOOP_COMMON_HOME/lib/, $HADOOP_HDFS_HOME/,$HADOOP_HDFS_HOME/lib/, $HADOOP_MAPRED_HOME/,$HADOOP_MAPRED_HOME/lib/, $HADOOP_YARN_HOME/,$HADOOP_YARN_HOME/lib/");
+        conf.set("fs.hdfs.impl","org.apache.hadoop.hdfs.DistributedFileSystem");
         Job job = Job.getInstance(conf);
         job.setJarByClass(WordCount.class);
         job.setJobName("wordcount");
@@ -69,8 +72,15 @@ public class WordCount extends Configured implements Tool {
         job.setInputFormatClass(TextInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 
+        Path outPath = new Path(args[1]);
         FileInputFormat.addInputPath(job, new Path(args[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+        FileOutputFormat.setOutputPath(job, outPath);
+
+        //rm output dir
+        FileSystem fs = FileSystem.get(conf);
+        if(fs.exists(outPath)) {
+            fs.delete(outPath, true);
+        }
 
         return(job.waitForCompletion(true)?0:-1);
 
