@@ -1,3 +1,5 @@
+package format;
+
 import org.apache.hadoop.examples.terasort.TeraInputFormat;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;

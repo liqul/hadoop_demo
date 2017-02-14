@@ -1,3 +1,6 @@
+package tool;
+
+import format.CombineWholeFileInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -13,7 +16,6 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Created by llq on 17-2-13.

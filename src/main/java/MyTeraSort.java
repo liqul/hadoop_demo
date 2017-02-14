@@ -6,6 +6,8 @@
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
+
+import format.CombineTeraInputFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configurable;
