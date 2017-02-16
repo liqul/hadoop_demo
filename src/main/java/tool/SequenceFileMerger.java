@@ -4,6 +4,7 @@ import format.CombineWholeFileInputFormat;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -37,6 +38,8 @@ public class SequenceFileMerger extends Configured implements Tool {
         job.setOutputValueClass(BytesWritable.class);
 
         job.setMapperClass(SequenceMapper.class);
+
+        job.setJarByClass(SequenceFileMerger.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));

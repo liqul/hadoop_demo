@@ -58,7 +58,7 @@ public class MyTeraSort extends Configured implements Tool {
 
     public int run(String[] args) throws Exception {
         System.setProperty("HADOOP_USER_NAME", "hdfs");
-        LOG.info("starting");
+        LOG.info("starting @" + System.currentTimeMillis());
         //common settings
         Configuration conf = this.getConf();
         conf.set("fs.hdfs.impl","org.apache.hadoop.hdfs.DistributedFileSystem");
@@ -107,6 +107,11 @@ public class MyTeraSort extends Configured implements Tool {
             FileInputFormat.addInputPath(job, inputDir);
             job.setInputFormatClass(SequenceFileInputFormat.class);
             job.setMapperClass(TeraSeqParserMapper.class);
+        } else if (args[0].equals("raw")) {
+            System.out.println("raw mode");
+            Path inputDir = new Path(args[1]);
+            TeraInputFormat.setInputPaths(job, new Path[]{inputDir});
+            job.setInputFormatClass(TeraInputFormat.class);
         }
 
 
@@ -135,7 +140,7 @@ public class MyTeraSort extends Configured implements Tool {
         job.getConfiguration().setBoolean("mapreduce.terasort.final.sync", true);
         System.out.println("run & wait");
         int ret1 = job.waitForCompletion(true)?0:1;
-        LOG.info("done");
+        LOG.info("done @" + System.currentTimeMillis());
         return ret1;
     }
 
