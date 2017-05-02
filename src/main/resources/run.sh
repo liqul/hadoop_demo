@@ -9,9 +9,14 @@ FSIZE=$2 #size of file in byte
 
 #output dir
 OUTPUT=raw
+CONTAINER="mycontainer"
+SWIFT_SERVICE="SwiftTest"
 
 #hdfs data upload dir
 HDFSDIR=/tmp/llq
+
+#swift data upload dir
+SWIFTDIR="swift://$CONTAINER.$SWIFT_SERVICE/"
 
 #jar file location
 JAR=hadoop_demo-1.0-SNAPSHOT-jar-with-dependencies.jar
@@ -22,6 +27,9 @@ ZOO=192.168.130.100:2181
 set -x #enable command echo
 export HADOOP_USER_NAME=hdfs #export user name
 
+echo "Step 0: clean existing files"
+sh clean.sh $OUTPUT $HDFSDIR $SWIFTDIR
+
 echo "Step 1: generate sort data"
 sh pgensort.sh $SIZE $FSIZE $OUTPUT
 
@@ -31,7 +39,6 @@ sh pgensort.sh $SIZE $FSIZE $OUTPUT
 echo "Step 2: upload to hdfs"
 hdfs dfs -mkdir $HDFSDIR
 hdfs dfs -put $OUTPUT $HDFSDIR
-rm -rf $OUTPUT
 
 echo "Step 3: run the raw TeraSort on data"
 hadoop jar $JAR MyTeraSort -D mapreduce.job.reduces=$NUM_OF_REDUCES raw $HDFSDIR/raw/ $HDFSDIR/rawOutput/
@@ -53,15 +60,19 @@ hdfs dfs -cp $HDFSDIR/rawOutput/_partition.lst $HDFSDIR/seqOutput/
 hadoop jar $JAR tool.SequenceFileMerger -D mapreduce.job.reduces=$NUM_OF_SEQFILES $HDFSDIR/raw/ $HDFSDIR/seq/
 hadoop jar $JAR MyTeraSort -D mapreduce.job.reduces=$NUM_OF_REDUCES sq $HDFSDIR/seq/ $HDFSDIR/seqOutput/
 
-echo "Step 7: run TeraSort on HBase (HBase table need to be created before running the test)"
+echo "Step 7: run TeraSort on HBase (HBase table need to be re-created before running the test)"
+echo "disable 'TeraSort'" | hbase shell
+echo "drop 'TeraSort'" | hbase shell
+echo "create 'TeraSort', {NAME=>'data',IS_MOB=>true}" | hbase shell
 hdfs dfs -mkdir $HDFSDIR/hbaseOutput/
 hdfs dfs -cp $HDFSDIR/rawOutput/_partition.lst $HDFSDIR/hbaseOutput/
 hadoop jar $JAR tool.HbaseTeraImporter -D hbase.zookeeper.quorum=$ZOO $HDFSDIR/raw/ TeraSort
 hadoop jar $JAR MyTeraSort -D mapreduce.job.reduces=$NUM_OF_REDUCES -D hbase.zookeeper.quorum=$ZOO hb TeraSort $HDFSDIR/hbaseOutput/
 
 echo "Step 8: run TeraSort on Openstack Swift (TODO)"
-
-echo "Step 9: delete output files"
-hdfs dfs -rm -r $HDFSDIR
+hdfs dfs -put $OUTPUT $SWIFTDIR
+hdfs dfs -mkdir $HDFSDIR/swiftOutput/
+hdfs dfs -cp $HDFSDIR/rawOutput/_partition.lst $HDFSDIR/swiftOutput/
+hadoop jar $JAR MyTeraSort -D mapreduce.job.reduces=$NUM_OF_REDUCES fs $SWIFTDIR/raw/ $HDFSDIR/swiftOutput/
 
 echo "Done!"

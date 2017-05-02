@@ -57,6 +57,7 @@ public class MyTeraSort extends Configured implements Tool {
     }
 
     public int run(String[] args) throws Exception {
+//        args = new String[] {"fs", "swift://mycontainer.SwiftTest/raw2", "/tmp/output3"};
         System.setProperty("HADOOP_USER_NAME", "hdfs");
         LOG.info("starting @" + System.currentTimeMillis());
         //common settings
@@ -66,6 +67,7 @@ public class MyTeraSort extends Configured implements Tool {
         Path outputDir = new Path(args[2]);
         job.setJobName("TeraSort");
         job.setJarByClass(MyTeraSort.class);
+//        job.setJar("/home/llq/Coderoot/hadoop_demo/target/hadoop_demo-1.0-SNAPSHOT-jar-with-dependencies.jar");
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         job.setOutputFormatClass(TeraOutputFormat.class);
@@ -112,6 +114,9 @@ public class MyTeraSort extends Configured implements Tool {
             Path inputDir = new Path(args[1]);
             TeraInputFormat.setInputPaths(job, new Path[]{inputDir});
             job.setInputFormatClass(TeraInputFormat.class);
+        } else {
+            System.out.println(args);
+            return -1;
         }
 
 
@@ -145,7 +150,10 @@ public class MyTeraSort extends Configured implements Tool {
     }
 
     public static void main(String[] args) throws Exception {
-        int res = ToolRunner.run(new Configuration(), new MyTeraSort(), args);
+//        args = new String[] {"fs", "swift://mycontainer.SwiftTest/raw2", "/tmp/output3"};
+        Configuration conf = new Configuration();
+        conf.addResource("/home/llq/Hadoop/hadoop/etc/hadoop/core-site.xml");
+        int res = ToolRunner.run(conf, new MyTeraSort(), args);
         System.exit(res);
     }
 

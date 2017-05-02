@@ -41,6 +41,7 @@ public class HbaseTeraImporter extends Configured implements Tool {
 
     public int run(String[] args) throws Exception {
         Configuration conf = getConf();
+        System.out.println("max:" + conf.get("hbase.client.keyvalue.maxsize"));
         Job job = Job.getInstance(conf);
         job.setJarByClass(HbaseTeraImporter.class);
         CombineWholeFileInputFormat.addInputPath(job, new Path(args[0]));

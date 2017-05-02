@@ -17,6 +17,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by llq on 17-2-10.
@@ -34,6 +35,14 @@ public class CombineTeraInputFormat extends CombineFileInputFormat<Text, Text> {
                 taskAttemptContext,
                 TeraRecordReader.class
         );
+    }
+
+    @Override
+    public List<InputSplit> getSplits(JobContext job) throws IOException {
+        System.out.println("Enter getSplits");
+        List<InputSplit> splits = super.getSplits(job);
+        System.out.println("Leave getSplits");
+        return splits;
     }
 
 
